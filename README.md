@@ -67,6 +67,6 @@ Pro Kalenderwoche gibt es ein empfohlenes Gericht, immer in XXL. Der Inhaber hat
 
 ## Technik
 
-Java 21, Spring Boot, Spring Data JPA und PostgreSQL.
+Java 25, Spring Boot, Spring Data JPA und PostgreSQL.
 
 > Schulprojekt. Keine echten Bestellungen, keine offizielle Verbindung zu Redo XXL.
