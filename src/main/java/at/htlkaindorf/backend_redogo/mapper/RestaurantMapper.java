@@ -2,6 +2,7 @@ package at.htlkaindorf.backend_redogo.mapper;
 
 import at.htlkaindorf.backend_redogo.beans.Restaurant;
 import at.htlkaindorf.backend_redogo.dto.RestaurantDto;
+import at.htlkaindorf.backend_redogo.repository.RestaurantRepository;
 import org.mapstruct.Mapper;
 
 import java.util.List;
@@ -13,5 +14,5 @@ public interface RestaurantMapper {
     List<Restaurant> toEntity(List<RestaurantDto> dto);
     List<RestaurantDto> toDto(List<Restaurant> restaurant);
 
-    
+
 }
