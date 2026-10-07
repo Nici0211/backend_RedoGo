@@ -51,4 +51,5 @@ class UserRepositoryTest {
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getVorname()).isEqualTo("Anna");
     }
+
 }
