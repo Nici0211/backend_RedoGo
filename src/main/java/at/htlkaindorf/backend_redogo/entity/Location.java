@@ -3,7 +3,9 @@ package at.htlkaindorf.backend_redogo.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -18,6 +20,8 @@ public class Location {
     private String streetName;
     private String description;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToOne
     private Restaurant restaurant;
 }
