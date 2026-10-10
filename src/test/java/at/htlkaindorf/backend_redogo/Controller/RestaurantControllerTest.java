@@ -20,16 +20,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * US2: Als Kunde möchte ich eine Übersicht aller Redo-Go-Standorte sehen.
- *
- * Black-Box-Test: nur HTTP-Request rein, Status + JSON raus (echter Stack, H2-Testdatenbank).
- * Mockdaten sind feste Konstanten - bei jedem Lauf dieselben, nichts ist zufällig.
- *
- *   Anlegereihenfolge (id):  Linz, Graz, Wien
- *   Name aufsteigend:        Graz, Linz, Wien
- *   PLZ aufsteigend:         Wien (1060), Linz (4020), Graz (8010)
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -71,6 +61,7 @@ class RestaurantControllerTest {
 
     // ═════════════════════════════ A) getAll ═════════════════════════════
 
+    // Trello [1]: Alle Standorte werden mit Name, Adresse und Beschreibung angezeigt
     @Test
     void getAll_antwortetMit200UndJsonArray() throws Exception {
         mockMvc.perform(get("/restaurant/getAll"))
@@ -79,6 +70,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
+    // Trello [1]: Alle Standorte werden mit Name, Adresse und Beschreibung angezeigt
     @Test
     void getAll_liefertAlleDreiStandorte() throws Exception {
         mockMvc.perform(get("/restaurant/getAll"))
@@ -86,6 +78,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$.length()").value(3));
     }
 
+    // Trello [1]: Alle Standorte werden mit Name, Adresse und Beschreibung angezeigt
     @Test
     void getAll_standortHatNameStrassePlzUndBeschreibung() throws Exception {
         mockMvc.perform(get("/restaurant/getAll"))
@@ -94,6 +87,7 @@ class RestaurantControllerTest {
                         + "' && @.location.description=='" + GRAZ_DESC + "')]").exists());
     }
 
+    // Trello [4]: Ohne vorhandene Standorte wird eine leere Liste angezeigt
     @Test
     void getAll_keineStandorte_leeresArrayMit200() throws Exception {
         clearDatabase();
@@ -104,6 +98,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
+    // Trello [5]: Ein Standort ohne Adresse wird trotzdem angezeigt
     @Test
     void getAll_restaurantOhneLocation_locationIstNull() throws Exception {
         clearDatabase();
@@ -119,9 +114,9 @@ class RestaurantControllerTest {
 
     // ═════════════════════════════ B) getSortedBy ═════════════════════════════
 
+    // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
     void getSortedBy_frontendAufruf_nameAsc_alphabetisch() throws Exception {
-        // genau der Aufruf, den das Frontend macht
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
@@ -130,6 +125,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$[2].name").value(WIEN_NAME));
     }
 
+    // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
     void getSortedBy_ohneDirection_istAufsteigend() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name"))
@@ -138,6 +134,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$[2].name").value(WIEN_NAME));
     }
 
+    // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
     void getSortedBy_nameDesc_absteigend() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "desc"))
@@ -147,6 +144,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$[2].name").value(GRAZ_NAME));
     }
 
+    // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
     void getSortedBy_directionGrossgeschrieben_wirdAkzeptiert() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "DESC"))
@@ -155,6 +153,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$[2].name").value(GRAZ_NAME));
     }
 
+    // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
     void getSortedBy_plzAsc_kleinstePlzZuerst() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "location.postalCode").param("direction", "asc"))
@@ -165,6 +164,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$[2].name").value(GRAZ_NAME));
     }
 
+    // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
     void getSortedBy_idAsc_anlegereihenfolge() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "id").param("direction", "asc"))
@@ -174,6 +174,7 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$[2].name").value(WIEN_NAME));
     }
 
+    // Trello [4]: Ohne vorhandene Standorte wird eine leere Liste angezeigt
     @Test
     void getSortedBy_keineStandorte_leeresArrayMit200() throws Exception {
         clearDatabase();
@@ -186,18 +187,21 @@ class RestaurantControllerTest {
 
     // ═════════════════════════════ C) Fehlerfälle ═════════════════════════════
 
+    // Trello [3]: Eine ungültige Sortierung wird mit einer Fehlermeldung abgelehnt
     @Test
     void getSortedBy_ohneByParameter_ist400() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy"))
                 .andExpect(status().isBadRequest());
     }
 
+    // Trello [3]: Eine ungültige Sortierung wird mit einer Fehlermeldung abgelehnt
     @Test
     void getSortedBy_unbekanntesFeld_ist400() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "gibtEsNicht"))
                 .andExpect(status().isBadRequest());
     }
 
+    // Trello [3]: Eine ungültige Sortierung wird mit einer Fehlermeldung abgelehnt
     @Test
     void getSortedBy_ungueltigeRichtung_ist400() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "seitwaerts"))
