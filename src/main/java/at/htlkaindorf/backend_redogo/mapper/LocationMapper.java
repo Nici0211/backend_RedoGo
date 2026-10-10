@@ -1,6 +1,6 @@
 package at.htlkaindorf.backend_redogo.mapper;
 
-import at.htlkaindorf.backend_redogo.beans.Location;
+import at.htlkaindorf.backend_redogo.entity.Location;
 import at.htlkaindorf.backend_redogo.dto.LocationDto;
 import org.mapstruct.Mapper;
 

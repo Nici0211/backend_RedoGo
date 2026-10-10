@@ -1,6 +1,6 @@
 package at.htlkaindorf.backend_redogo.Service;
 
-import at.htlkaindorf.backend_redogo.beans.Restaurant;
+import at.htlkaindorf.backend_redogo.entity.Restaurant;
 import at.htlkaindorf.backend_redogo.dto.RestaurantDto;
 import at.htlkaindorf.backend_redogo.mapper.RestaurantMapper;
 import at.htlkaindorf.backend_redogo.repository.RestaurantRepository;

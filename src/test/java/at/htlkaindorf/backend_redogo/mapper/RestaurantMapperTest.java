@@ -1,6 +1,6 @@
 package at.htlkaindorf.backend_redogo.mapper;
 
-import at.htlkaindorf.backend_redogo.beans.Restaurant;
+import at.htlkaindorf.backend_redogo.entity.Restaurant;
 import at.htlkaindorf.backend_redogo.dto.RestaurantDto;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;

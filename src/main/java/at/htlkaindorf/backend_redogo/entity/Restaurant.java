@@ -1,4 +1,4 @@
-package at.htlkaindorf.backend_redogo.beans;
+package at.htlkaindorf.backend_redogo.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,15 +9,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Location {
+public class Restaurant {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-
-    private Long postalCode;
-    private String streetName;
-    private String description;
+    private String name;
 
     @OneToOne
-    private Restaurant restaurant;
+    private Location location;
 }
