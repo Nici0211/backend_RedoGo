@@ -137,4 +137,5 @@ class UserRepositoryTest {
         assertThat(userRepository.count()).isEqualTo(2);
         assertThat(userRepository.existsByEmail("anna@muster.at")).isFalse();
     }
+
 }
