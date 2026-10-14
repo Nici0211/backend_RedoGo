@@ -27,6 +27,10 @@ public class Menu {
     @Column(nullable = false, precision = 8, scale = 2)
     private BigDecimal price;
 
+    /** Nicht verfügbare Einträge werden angezeigt, können aber nicht in den Warenkorb gelegt werden (US1). */
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean available = true;
+
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

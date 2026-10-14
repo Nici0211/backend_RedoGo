@@ -1,7 +1,7 @@
 package at.htlkaindorf.backend_redogo.service;
 
-import at.htlkaindorf.backend_redogo.dto.SpeisekarteDto;
-import at.htlkaindorf.backend_redogo.dto.SpeisekarteEintragDto;
+import at.htlkaindorf.backend_redogo.dto.MenuCardDto;
+import at.htlkaindorf.backend_redogo.dto.MenuCardEntryDto;
 import at.htlkaindorf.backend_redogo.entity.Restaurant;
 import at.htlkaindorf.backend_redogo.repository.DishRepository;
 import at.htlkaindorf.backend_redogo.repository.MenuRepository;
@@ -18,28 +18,28 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class SpeisekarteService {
+public class MenuCardService {
 
     private final RestaurantRepository restaurantRepo;
     private final DishRepository dishRepo;
     private final MenuRepository menuRepo;
 
     @Transactional(readOnly = true)
-    public SpeisekarteDto getSpeisekarte(Long restaurantId) {
+    public MenuCardDto getMenuCard(Long restaurantId) {
         Restaurant restaurant = restaurantRepo.findById(restaurantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Restaurant mit der ID " + restaurantId + " wurde nicht gefunden"));
 
         log.info("Getting Speisekarte of Restaurant {}", restaurantId);
 
-        List<SpeisekarteEintragDto> gerichte = dishRepo.findByRestaurantIdOrderByIdAsc(restaurantId).stream()
-                .map(d -> new SpeisekarteEintragDto(d.getId(), d.getName(), d.getDescription(), d.getPrice()))
+        List<MenuCardEntryDto> gerichte = dishRepo.findByRestaurantIdOrderByIdAsc(restaurantId).stream()
+                .map(d -> new MenuCardEntryDto(d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable()))
                 .toList();
 
-        List<SpeisekarteEintragDto> menues = menuRepo.findByRestaurantIdOrderByIdAsc(restaurantId).stream()
-                .map(m -> new SpeisekarteEintragDto(m.getId(), m.getName(), m.getDescription(), m.getPrice()))
+        List<MenuCardEntryDto> menues = menuRepo.findByRestaurantIdOrderByIdAsc(restaurantId).stream()
+                .map(m -> new MenuCardEntryDto(m.getId(), m.getName(), m.getDescription(), m.getPrice(), m.isAvailable()))
                 .toList();
 
-        return new SpeisekarteDto(restaurant.getId(), restaurant.getName(), gerichte, menues);
+        return new MenuCardDto(restaurant.getId(), restaurant.getName(), gerichte, menues);
     }
 }

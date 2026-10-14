@@ -5,16 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-/**
- * Ein Eintrag der Speisekarte - wird sowohl für Gerichte als auch für Menüs verwendet.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SpeisekarteEintragDto {
+public class CartDto {
     private Long id;
-    private String name;
-    private String description;
-    private BigDecimal price;
+    private Long userId;
+    private List<CartItemDto> items;
+    private BigDecimal totalPrice;
 }

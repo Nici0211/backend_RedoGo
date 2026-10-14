@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class SpeisekarteControllerTest {
+class MenuCardControllerTest {
 
     private static final String LINZ_NAME = "RedoGo Linz Landstraße";
     private static final String GRAZ_NAME = "RedoGo Graz Hauptplatz";

@@ -9,9 +9,9 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SpeisekarteDto {
+public class MenuCardDto {
     private Long restaurantId;
     private String restaurantName;
-    private List<SpeisekarteEintragDto> gerichte;
-    private List<SpeisekarteEintragDto> menues;
+    private List<MenuCardEntryDto> gerichte;
+    private List<MenuCardEntryDto> menues;
 }
