@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * US1: Als Kunde möchte ich Gerichte oder Menüs in meinen Warenkorb legen.
+ * US7: Als Kunde will ich Artikel aus dem Warenkorb entfernen können.
  */
 @Service
 @Slf4j
@@ -75,6 +76,41 @@ public class ShoppingCartService {
         return mapper.toDto(saved);
     }
 
+    /**
+     * US7: Entfernt eine Position komplett aus dem Warenkorb. Wird die letzte Position entfernt,
+     * bleibt ein leerer Warenkorb (Gesamtpreis 0) übrig.
+     */
+    @Transactional
+    public CartDto removeItem(Long userId, Long cartItemId) {
+        findUser(userId);
+        ShoppingCart cart = cartRepo.findByUserId(userId).orElseThrow(() -> itemNotFound(cartItemId));
+        return removeFromCart(userId, cart, cartItemId);
+    }
+
+    /**
+     * US7: Setzt die Menge einer Position. Menge 0 entfernt die Position, negative Mengen
+     * und Mengen über dem Limit werden abgelehnt.
+     */
+    @Transactional
+    public CartDto updateItemQuantity(Long userId, Long cartItemId, int quantity) {
+        findUser(userId);
+        if (quantity < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Menge darf nicht negativ sein");
+        }
+        if (quantity > MAX_QUANTITY_PER_ITEM) {
+            throw tooMany();
+        }
+        ShoppingCart cart = cartRepo.findByUserId(userId).orElseThrow(() -> itemNotFound(cartItemId));
+        if (quantity == 0) {
+            return removeFromCart(userId, cart, cartItemId);
+        }
+        CartItem item = findCartItem(cart, cartItemId);
+        item.setQuantity(quantity);
+        ShoppingCart saved = cartRepo.saveAndFlush(cart);
+        log.info("User {}: Position {} auf Menge {} gesetzt", userId, cartItemId, quantity);
+        return mapper.toDto(saved);
+    }
+
     // ───────────────────────── Hilfsmethoden ─────────────────────────
 
     private User findUser(Long userId) {
@@ -119,6 +155,28 @@ public class ShoppingCartService {
                     cart.getItems().add(item);
                     return item;
                 });
+    }
+
+    private CartDto removeFromCart(Long userId, ShoppingCart cart, Long cartItemId) {
+        CartItem item = findCartItem(cart, cartItemId);
+        // orphanRemoval = true -> die Position wird beim Flush aus der DB gelöscht
+        cart.getItems().remove(item);
+        ShoppingCart saved = cartRepo.saveAndFlush(cart);
+        log.info("User {}: Position {} aus dem Warenkorb entfernt", userId, cartItemId);
+        return mapper.toDto(saved);
+    }
+
+    /** Sucht die Position im Warenkorb dieses Benutzers - fremde Positionen werden so nie gefunden. */
+    private CartItem findCartItem(ShoppingCart cart, Long cartItemId) {
+        return cart.getItems().stream()
+                .filter(i -> i.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> itemNotFound(cartItemId));
+    }
+
+    private ResponseStatusException itemNotFound(Long cartItemId) {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Die Position mit der ID " + cartItemId + " ist nicht im Warenkorb");
     }
 
     private ResponseStatusException notAvailable(String name) {

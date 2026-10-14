@@ -8,6 +8,7 @@ import at.htlkaindorf.backend_redogo.repository.DishRepository;
 import at.htlkaindorf.backend_redogo.repository.MenuRepository;
 import at.htlkaindorf.backend_redogo.repository.RestaurantRepository;
 import at.htlkaindorf.backend_redogo.repository.UserRepository;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +20,12 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -360,6 +364,148 @@ class ShoppingCartControllerTest {
                 .andExpect(jsonPath("$.items").isArray());
     }
 
+    // ═════════════════════════════ US7: Artikel aus dem Warenkorb entfernen ═════════════════════════════
+    // DELETE /api/users/{id}/cart/items/{cartItemId} und PUT .../items/{cartItemId} (Menge 0 = entfernen)
+
+    // Nach dem Entfernen ist der Artikel nicht mehr im Warenkorb sichtbar
+    @Test
+    void removeItem_isNoLongerVisibleInCart() throws Exception {
+        long burgerPos = addAndGetCartItemId(anna, "DISH", cheeseburger.getId(), 1);
+        addItem(anna, "DISH", pommes.getId(), 1);
+
+        removeItem(anna.getId(), burgerPos)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].name").value("Pommes Frites"));
+
+        // auch beim erneuten Abrufen
+        mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].name").value("Pommes Frites"));
+    }
+
+    // Der Gesamtpreis wird nach dem Entfernen neu berechnet
+    @Test
+    void removeItem_recalculatesTotalPrice() throws Exception {
+        long burgerPos = addAndGetCartItemId(anna, "DISH", cheeseburger.getId(), 2);   // 17.80
+        addItem(anna, "DISH", pommes.getId(), 1);                                      //  3.50
+
+        removeItem(anna.getId(), burgerPos)
+                .andExpect(jsonPath("$.totalPrice").value(3.5));
+    }
+
+    // Wird der letzte Artikel entfernt, ist der Warenkorb leer
+    @Test
+    void removeLastItem_leavesEmptyCart() throws Exception {
+        long burgerPos = addAndGetCartItemId(anna, "DISH", cheeseburger.getId(), 1);
+
+        removeItem(anna.getId(), burgerPos)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0))
+                .andExpect(jsonPath("$.totalPrice").value(0.0));
+
+        mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
+                .andExpect(jsonPath("$.items.length()").value(0))
+                .andExpect(jsonPath("$.totalPrice").value(0.0));
+    }
+
+    // Eine Menge von 0 entfernt den Artikel aus dem Warenkorb
+    @Test
+    void quantityZero_removesItemFromCart() throws Exception {
+        long menuPos = addAndGetCartItemId(anna, "MENU", burgerMenue.getId(), 3);
+
+        setQuantity(anna.getId(), menuPos, 0)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0))
+                .andExpect(jsonPath("$.totalPrice").value(0.0));
+    }
+
+    // Ein Menü (nicht nur Gerichte) lässt sich entfernen, andere Positionen bleiben
+    @Test
+    void removeMenu_keepsOtherItems() throws Exception {
+        addItem(anna, "DISH", cheeseburger.getId(), 1);
+        long menuPos = addAndGetCartItemId(anna, "MENU", burgerMenue.getId(), 1);
+
+        removeItem(anna.getId(), menuPos)
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].type").value("DISH"))
+                .andExpect(jsonPath("$.totalPrice").value(8.9));
+    }
+
+    // Menge ändern: neue Menge und Gesamtpreis stimmen
+    @Test
+    void setQuantity_updatesQuantityAndTotal() throws Exception {
+        long pommesPos = addAndGetCartItemId(anna, "DISH", pommes.getId(), 1);
+
+        setQuantity(anna.getId(), pommesPos, 4)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].quantity").value(4))
+                .andExpect(jsonPath("$.totalPrice").value(14.0));
+    }
+
+    // Negative Menge oder Menge über dem Limit wird abgelehnt und ändert nichts
+    @Test
+    void setQuantity_invalidValuesAreRejected() throws Exception {
+        long pommesPos = addAndGetCartItemId(anna, "DISH", pommes.getId(), 2);
+
+        setQuantity(anna.getId(), pommesPos, -1)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Die Menge darf nicht negativ sein"));
+        setQuantity(anna.getId(), pommesPos, 100)
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
+                .andExpect(jsonPath("$.items[0].quantity").value(2));
+    }
+
+    // Fehlende Menge: 400 mit Fehlermeldung
+    @Test
+    void setQuantity_missingQuantity_returns400() throws Exception {
+        long pommesPos = addAndGetCartItemId(anna, "DISH", pommes.getId(), 1);
+
+        mockMvc.perform(put("/api/users/{id}/cart/items/{itemId}", anna.getId(), pommesPos)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Die Menge fehlt"));
+    }
+
+    // Unbekannte Position: 404
+    @Test
+    void removeUnknownItem_returns404() throws Exception {
+        addItem(anna, "DISH", pommes.getId(), 1);
+
+        removeItem(anna.getId(), 999999L)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    // Benutzer ohne Warenkorb: 404 statt Fehler 500
+    @Test
+    void removeItem_userWithoutCart_returns404() throws Exception {
+        removeItem(max.getId(), 1L).andExpect(status().isNotFound());
+    }
+
+    // Unbekannter Benutzer: 404
+    @Test
+    void removeItem_unknownUser_returns404() throws Exception {
+        removeItem(999999L, 1L).andExpect(status().isNotFound());
+    }
+
+    // Die Position eines anderen Benutzers kann nicht entfernt werden
+    @Test
+    void removeItemOfOtherUser_returns404_andKeepsCart() throws Exception {
+        long annasPos = addAndGetCartItemId(anna, "DISH", cheeseburger.getId(), 1);
+        addItem(max, "DISH", pommes.getId(), 1);
+
+        removeItem(max.getId(), annasPos).andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].name").value("Classic Cheeseburger"));
+    }
+
     // ───────────────────────── Hilfsmethoden ─────────────────────────
 
     private ResultActions addItem(User user, String type, Long itemId, int quantity) throws Exception {
@@ -371,6 +517,26 @@ class ShoppingCartControllerTest {
         return mockMvc.perform(post("/api/users/{id}/cart/items", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
+    }
+
+    private ResultActions removeItem(Long userId, Long cartItemId) throws Exception {
+        return mockMvc.perform(delete("/api/users/{id}/cart/items/{itemId}", userId, cartItemId));
+    }
+
+    private ResultActions setQuantity(Long userId, Long cartItemId, int quantity) throws Exception {
+        return mockMvc.perform(put("/api/users/{id}/cart/items/{itemId}", userId, cartItemId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantity\":" + quantity + "}"));
+    }
+
+    /** Legt einen Artikel in den Warenkorb und liefert die ID der entstandenen Position (CartItemDto.id). */
+    private long addAndGetCartItemId(User user, String type, Long itemId, int quantity) throws Exception {
+        String json = addItem(user, type, itemId, quantity)
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        List<Number> ids = JsonPath.read(json,
+                "$.items[?(@.type=='" + type + "' && @.itemId==" + itemId + ")].id");
+        return ids.get(0).longValue();
     }
 
     private User saveUser(String vorname, String email) {
