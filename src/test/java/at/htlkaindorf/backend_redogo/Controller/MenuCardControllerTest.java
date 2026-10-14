@@ -52,7 +52,7 @@ class MenuCardControllerTest {
     private Restaurant wien;
 
     @BeforeEach
-    void setUpMockdaten() {
+    void setUpMockData() {
         linz = saveRestaurant(LINZ_NAME);
         graz = saveRestaurant(GRAZ_NAME);
         wien = saveRestaurant(WIEN_NAME);
@@ -72,7 +72,7 @@ class MenuCardControllerTest {
 
     // Die Speisekarte eines Restaurants wird als JSON geliefert
     @Test
-    void speisekarte_antwortetMit200UndJson() throws Exception {
+    void menuCard_respondsWith200AndJson() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", linz.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -82,7 +82,7 @@ class MenuCardControllerTest {
 
     // Die Speisekarte gehört eindeutig zu einem Restaurant (ID und Name)
     @Test
-    void speisekarte_enthaeltRestaurantIdUndName() throws Exception {
+    void menuCard_containsRestaurantIdAndName() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", linz.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.restaurantId").value(linz.getId()))
@@ -91,7 +91,7 @@ class MenuCardControllerTest {
 
     // Alle Gerichte des Restaurants werden angezeigt
     @Test
-    void speisekarte_liefertAlleGerichteDesRestaurants() throws Exception {
+    void menuCard_returnsAllDishesOfRestaurant() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", linz.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gerichte.length()").value(2))
@@ -101,7 +101,7 @@ class MenuCardControllerTest {
 
     // Ein Gericht hat Name, Beschreibung und Preis
     @Test
-    void speisekarte_gerichtHatNameBeschreibungUndPreis() throws Exception {
+    void menuCard_dishHasNameDescriptionAndPrice() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", linz.getId()))
                 .andExpect(jsonPath("$.gerichte[0].name").value("Classic Cheeseburger"))
                 .andExpect(jsonPath("$.gerichte[0].description").value("Rindfleisch, Cheddar und Salat"))
@@ -110,7 +110,7 @@ class MenuCardControllerTest {
 
     // Alle Menüs des Restaurants werden angezeigt
     @Test
-    void speisekarte_liefertAlleMenuesDesRestaurants() throws Exception {
+    void menuCard_returnsAllMenusOfRestaurant() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", graz.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.menues.length()").value(2))
@@ -120,7 +120,7 @@ class MenuCardControllerTest {
 
     // Ein Menü hat Name, Beschreibung und Preis
     @Test
-    void speisekarte_menueHatNameBeschreibungUndPreis() throws Exception {
+    void menuCard_menuHasNameDescriptionAndPrice() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", linz.getId()))
                 .andExpect(jsonPath("$.menues[0].name").value("Burger-Menü"))
                 .andExpect(jsonPath("$.menues[0].description").value("Cheeseburger, Pommes und Getränk"))
@@ -131,7 +131,7 @@ class MenuCardControllerTest {
 
     // Restaurants haben unterschiedliche Gerichte und Menüs
     @Test
-    void speisekarte_proRestaurantUnterschiedlich() throws Exception {
+    void menuCard_differsPerRestaurant() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", graz.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.restaurantName").value(GRAZ_NAME))
@@ -142,7 +142,7 @@ class MenuCardControllerTest {
 
     // Gerichte und Menüs eines anderen Restaurants werden nicht angezeigt
     @Test
-    void speisekarte_zeigtNurEintraegeDesEigenenRestaurants() throws Exception {
+    void menuCard_showsOnlyEntriesOfOwnRestaurant() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", graz.getId()))
                 .andExpect(jsonPath("$.gerichte[?(@.name=='Classic Cheeseburger')]").isEmpty())
                 .andExpect(jsonPath("$.menues[?(@.name=='Burger-Menü')]").isEmpty());
@@ -152,7 +152,7 @@ class MenuCardControllerTest {
 
     // Ein Restaurant ohne Speisekarte liefert leere Listen (kein Fehler)
     @Test
-    void speisekarte_restaurantOhneEintraege_leereListenMit200() throws Exception {
+    void menuCard_restaurantWithoutEntries_emptyListsWith200() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", wien.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.restaurantName").value(WIEN_NAME))
@@ -162,14 +162,14 @@ class MenuCardControllerTest {
 
     // Ein nicht vorhandenes Restaurant wird mit 404 abgelehnt
     @Test
-    void speisekarte_unbekannteRestaurantId_ist404() throws Exception {
+    void menuCard_unknownRestaurantId_returns404() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", 999999L))
                 .andExpect(status().isNotFound());
     }
 
     // Eine ungültige ID (keine Zahl) wird mit 400 abgelehnt
     @Test
-    void speisekarte_ungueltigeRestaurantId_ist400() throws Exception {
+    void menuCard_invalidRestaurantId_returns400() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", "abc"))
                 .andExpect(status().isBadRequest());
     }

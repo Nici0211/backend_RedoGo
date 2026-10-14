@@ -61,7 +61,7 @@ class ShoppingCartControllerTest {
     private Menu menueAus;       // nicht verfügbar
 
     @BeforeEach
-    void setUpMockdaten() {
+    void setUpMockData() {
         anna = saveUser("Anna", "anna@muster.at");
         max = saveUser("Max", "max@mustermann.at");
 
@@ -80,7 +80,7 @@ class ShoppingCartControllerTest {
 
     // Ein Gericht wird hinzugefügt und in der Antwort geliefert
     @Test
-    void gerichtHinzufuegen_istInAntwortSichtbar() throws Exception {
+    void addDish_isVisibleInResponse() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 1)
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -96,7 +96,7 @@ class ShoppingCartControllerTest {
 
     // Ein Menü wird hinzugefügt und in der Antwort geliefert
     @Test
-    void menueHinzufuegen_istInAntwortSichtbar() throws Exception {
+    void addMenu_isVisibleInResponse() throws Exception {
         addItem(anna, "MENU", burgerMenue.getId(), 1)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.items.length()").value(1))
@@ -108,7 +108,7 @@ class ShoppingCartControllerTest {
 
     // Der Artikel ist auch beim erneuten Abrufen des Warenkorbs noch da
     @Test
-    void hinzugefuegterArtikel_istBeimAbrufenDesWarenkorbsSichtbar() throws Exception {
+    void addedItem_isVisibleWhenFetchingCart() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 1);
 
         mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
@@ -119,7 +119,7 @@ class ShoppingCartControllerTest {
 
     // Wird die Menge weggelassen, wird 1 Stück hinzugefügt
     @Test
-    void mengeWeggelassen_istEinStueck() throws Exception {
+    void quantityOmitted_defaultsToOne() throws Exception {
         String body = "{\"type\":\"DISH\",\"itemId\":" + cheeseburger.getId() + "}";
 
         mockMvc.perform(post("/api/users/{id}/cart/items", anna.getId())
@@ -132,7 +132,7 @@ class ShoppingCartControllerTest {
 
     // Zweimal dasselbe Gericht: ein Eintrag mit Menge 2
     @Test
-    void gleichesGerichtZweimal_erhoehtMengeStattZweiterEintrag() throws Exception {
+    void sameDishTwice_increasesQuantityInsteadOfSecondEntry() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 1);
 
         addItem(anna, "DISH", cheeseburger.getId(), 1)
@@ -143,7 +143,7 @@ class ShoppingCartControllerTest {
 
     // Zweimal dasselbe Menü: ein Eintrag mit summierter Menge
     @Test
-    void gleichesMenueMitMengen_summiertDieMenge() throws Exception {
+    void sameMenuWithQuantities_sumsQuantity() throws Exception {
         addItem(anna, "MENU", burgerMenue.getId(), 3);
 
         addItem(anna, "MENU", burgerMenue.getId(), 2)
@@ -153,7 +153,7 @@ class ShoppingCartControllerTest {
 
     // Ein Gericht und ein Menü sind verschiedene Positionen
     @Test
-    void gerichtUndMenueSindGetrennePositionen() throws Exception {
+    void dishAndMenuAreSeparateLineItems() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 1);
 
         addItem(anna, "MENU", burgerMenue.getId(), 1)
@@ -164,7 +164,7 @@ class ShoppingCartControllerTest {
 
     // Mehrere Gerichte und ein Menü liegen gleichzeitig im Warenkorb
     @Test
-    void mehrereVerschiedeneArtikel_liegenGleichzeitigImWarenkorb() throws Exception {
+    void multipleDifferentItems_areInCartSimultaneously() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 1);
         addItem(anna, "DISH", pommes.getId(), 1);
         addItem(anna, "MENU", burgerMenue.getId(), 1);
@@ -179,7 +179,7 @@ class ShoppingCartControllerTest {
 
     // Jeder Benutzer hat seinen eigenen Warenkorb
     @Test
-    void warenkoerbeVerschiedenerBenutzerSindGetrennt() throws Exception {
+    void cartsOfDifferentUsersAreSeparate() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 1);
 
         mockMvc.perform(get("/api/users/{id}/cart", max.getId()))
@@ -191,7 +191,7 @@ class ShoppingCartControllerTest {
 
     // Negative Menge: 400 mit Fehlermeldung
     @Test
-    void negativeMenge_wirdMitFehlermeldungAbgelehnt() throws Exception {
+    void negativeQuantity_isRejectedWithErrorMessage() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), -1)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
@@ -200,7 +200,7 @@ class ShoppingCartControllerTest {
 
     // Menge 0 ergibt keinen Sinn und wird ebenfalls abgelehnt
     @Test
-    void mengeNull_wirdAbgelehnt() throws Exception {
+    void quantityZero_isRejected() throws Exception {
         addItem(anna, "MENU", burgerMenue.getId(), 0)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Die Menge muss mindestens 1 sein"));
@@ -208,7 +208,7 @@ class ShoppingCartControllerTest {
 
     // Eine abgelehnte Anfrage verändert den Warenkorb nicht
     @Test
-    void abgelehnteMenge_veraendertWarenkorbNicht() throws Exception {
+    void rejectedQuantity_doesNotChangeCart() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 2);
         addItem(anna, "DISH", cheeseburger.getId(), -5).andExpect(status().isBadRequest());
 
@@ -219,7 +219,7 @@ class ShoppingCartControllerTest {
 
     // Eine unrealistisch hohe Menge wird abgelehnt (Schutz vor Überlauf)
     @Test
-    void zuHoheMenge_wirdAbgelehnt() throws Exception {
+    void tooHighQuantity_isRejected() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 100)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").isNotEmpty());
@@ -233,7 +233,7 @@ class ShoppingCartControllerTest {
 
     // Gesamtpreis = Summe aus Einzelpreis x Menge über alle Artikel
     @Test
-    void gesamtpreis_wirdAusAllenArtikelnUndMengenBerechnet() throws Exception {
+    void totalPrice_isCalculatedFromAllItemsAndQuantities() throws Exception {
         addItem(anna, "DISH", cheeseburger.getId(), 2);   // 2 x 8.90  = 17.80
         addItem(anna, "DISH", pommes.getId(), 1);         // 1 x 3.50  =  3.50
         addItem(anna, "MENU", burgerMenue.getId(), 1);    // 1 x 11.90 = 11.90
@@ -247,7 +247,7 @@ class ShoppingCartControllerTest {
 
     // Der Gesamtpreis wächst, wenn die Menge eines Artikels erhöht wird
     @Test
-    void gesamtpreis_aktualisiertSichBeiMengenaenderung() throws Exception {
+    void totalPrice_updatesOnQuantityChange() throws Exception {
         addItem(anna, "DISH", pommes.getId(), 1)
                 .andExpect(jsonPath("$.totalPrice").value(3.5));
 
@@ -257,7 +257,7 @@ class ShoppingCartControllerTest {
 
     // Ein leerer Warenkorb kostet 0
     @Test
-    void leererWarenkorb_hatGesamtpreisNull() throws Exception {
+    void emptyCart_hasTotalPriceZero() throws Exception {
         mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(0))
@@ -268,7 +268,7 @@ class ShoppingCartControllerTest {
 
     // Ein nicht verfügbares Gericht wird abgelehnt
     @Test
-    void nichtVerfuegbaresGericht_wirdAbgelehnt() throws Exception {
+    void unavailableDish_isRejected() throws Exception {
         addItem(anna, "DISH", ausverkauft.getId(), 1)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("'Coleslaw' ist derzeit nicht verfügbar"));
@@ -276,7 +276,7 @@ class ShoppingCartControllerTest {
 
     // Ein nicht verfügbares Menü wird abgelehnt
     @Test
-    void nichtVerfuegbaresMenue_wirdAbgelehnt() throws Exception {
+    void unavailableMenu_isRejected() throws Exception {
         addItem(anna, "MENU", menueAus.getId(), 1)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("'Crunch-Menü' ist derzeit nicht verfügbar"));
@@ -284,7 +284,7 @@ class ShoppingCartControllerTest {
 
     // Nach der Ablehnung ist der Warenkorb unverändert leer
     @Test
-    void nichtVerfuegbarerArtikel_landetNichtImWarenkorb() throws Exception {
+    void unavailableItem_doesNotEndUpInCart() throws Exception {
         addItem(anna, "DISH", ausverkauft.getId(), 1).andExpect(status().isConflict());
 
         mockMvc.perform(get("/api/users/{id}/cart", anna.getId()))
@@ -293,7 +293,7 @@ class ShoppingCartControllerTest {
 
     // Die Speisekarte kennzeichnet nicht verfügbare Einträge, damit sie angezeigt, aber nicht bestellt werden
     @Test
-    void speisekarte_kennzeichnetVerfuegbarkeit() throws Exception {
+    void menuCard_marksAvailability() throws Exception {
         mockMvc.perform(get("/restaurant/{id}/speisekarte", cheeseburger.getRestaurant().getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gerichte[?(@.name=='Classic Cheeseburger')].available").value(true))
@@ -305,7 +305,7 @@ class ShoppingCartControllerTest {
 
     // Unbekanntes Gericht: 404
     @Test
-    void unbekanntesGericht_ist404() throws Exception {
+    void unknownDish_returns404() throws Exception {
         addItem(anna, "DISH", 999999L, 1)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").isNotEmpty());
@@ -313,14 +313,14 @@ class ShoppingCartControllerTest {
 
     // Unbekanntes Menü: 404
     @Test
-    void unbekanntesMenue_ist404() throws Exception {
+    void unknownMenu_returns404() throws Exception {
         addItem(anna, "MENU", 999999L, 1)
                 .andExpect(status().isNotFound());
     }
 
     // Unbekannter Benutzer: 404 beim Hinzufügen und beim Abrufen
     @Test
-    void unbekannterBenutzer_ist404() throws Exception {
+    void unknownUser_returns404() throws Exception {
         addItem(999999L, "DISH", cheeseburger.getId(), 1)
                 .andExpect(status().isNotFound());
 
@@ -330,7 +330,7 @@ class ShoppingCartControllerTest {
 
     // Fehlende Artikelart bzw. -ID: 400 mit Fehlermeldung
     @Test
-    void fehlendeAngaben_sind400() throws Exception {
+    void missingFields_return400() throws Exception {
         mockMvc.perform(post("/api/users/{id}/cart/items", anna.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"itemId\":" + cheeseburger.getId() + ",\"quantity\":1}"))
@@ -346,14 +346,14 @@ class ShoppingCartControllerTest {
 
     // Eine unbekannte Artikelart wird mit 400 abgelehnt
     @Test
-    void unbekannteArtikelart_ist400() throws Exception {
+    void unknownItemType_returns400() throws Exception {
         addItem(anna, "GETRAENK", cheeseburger.getId(), 1)
                 .andExpect(status().isBadRequest());
     }
 
     // Ein Benutzer ohne Warenkorb bekommt einen leeren Warenkorb (kein Fehler)
     @Test
-    void benutzerOhneWarenkorb_bekommtLeerenWarenkorb() throws Exception {
+    void userWithoutCart_getsEmptyCart() throws Exception {
         mockMvc.perform(get("/api/users/{id}/cart", max.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(max.getId()))

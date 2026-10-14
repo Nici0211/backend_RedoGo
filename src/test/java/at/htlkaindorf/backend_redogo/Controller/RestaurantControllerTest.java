@@ -52,7 +52,7 @@ class RestaurantControllerTest {
     private LocationRepository locationRepo;
 
     @BeforeEach
-    void setUpMockdaten() {
+    void setUpMockData() {
         clearDatabase();
         save(LINZ_NAME, LINZ_PLZ, LINZ_STREET, LINZ_DESC);   // 1. Eintrag
         save(GRAZ_NAME, GRAZ_PLZ, GRAZ_STREET, GRAZ_DESC);   // 2. Eintrag
@@ -63,7 +63,7 @@ class RestaurantControllerTest {
 
     // Trello [1]: Alle Standorte werden mit Name, Adresse und Beschreibung angezeigt
     @Test
-    void getAll_antwortetMit200UndJsonArray() throws Exception {
+    void getAll_respondsWith200AndJsonArray() throws Exception {
         mockMvc.perform(get("/restaurant/getAll"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -72,7 +72,7 @@ class RestaurantControllerTest {
 
     // Trello [1]: Alle Standorte werden mit Name, Adresse und Beschreibung angezeigt
     @Test
-    void getAll_liefertAlleDreiStandorte() throws Exception {
+    void getAll_returnsAllThreeLocations() throws Exception {
         mockMvc.perform(get("/restaurant/getAll"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -80,7 +80,7 @@ class RestaurantControllerTest {
 
     // Trello [1]: Alle Standorte werden mit Name, Adresse und Beschreibung angezeigt
     @Test
-    void getAll_standortHatNameStrassePlzUndBeschreibung() throws Exception {
+    void getAll_locationHasNameStreetPostalCodeAndDescription() throws Exception {
         mockMvc.perform(get("/restaurant/getAll"))
                 .andExpect(jsonPath("$[?(@.name=='" + GRAZ_NAME + "' && @.location.postalCode==" + GRAZ_PLZ
                         + " && @.location.streetName=='" + GRAZ_STREET
@@ -89,7 +89,7 @@ class RestaurantControllerTest {
 
     // Trello [4]: Ohne vorhandene Standorte wird eine leere Liste angezeigt
     @Test
-    void getAll_keineStandorte_leeresArrayMit200() throws Exception {
+    void getAll_noLocations_emptyArrayWith200() throws Exception {
         clearDatabase();
 
         mockMvc.perform(get("/restaurant/getAll"))
@@ -100,7 +100,7 @@ class RestaurantControllerTest {
 
     // Trello [5]: Ein Standort ohne Adresse wird trotzdem angezeigt
     @Test
-    void getAll_restaurantOhneLocation_locationIstNull() throws Exception {
+    void getAll_restaurantWithoutLocation_locationIsNull() throws Exception {
         clearDatabase();
         Restaurant restaurant = new Restaurant();
         restaurant.setName("RedoGo Innsbruck Maria-Theresien-Straße");
@@ -116,7 +116,7 @@ class RestaurantControllerTest {
 
     // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
-    void getSortedBy_frontendAufruf_nameAsc_alphabetisch() throws Exception {
+    void getSortedBy_frontendCall_nameAsc_alphabetical() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
@@ -127,7 +127,7 @@ class RestaurantControllerTest {
 
     // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
-    void getSortedBy_ohneDirection_istAufsteigend() throws Exception {
+    void getSortedBy_withoutDirection_isAscending() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(GRAZ_NAME))
@@ -136,7 +136,7 @@ class RestaurantControllerTest {
 
     // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
-    void getSortedBy_nameDesc_absteigend() throws Exception {
+    void getSortedBy_nameDesc_descending() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "desc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(WIEN_NAME))
@@ -146,7 +146,7 @@ class RestaurantControllerTest {
 
     // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
-    void getSortedBy_directionGrossgeschrieben_wirdAkzeptiert() throws Exception {
+    void getSortedBy_directionUppercase_isAccepted() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "DESC"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(WIEN_NAME))
@@ -155,7 +155,7 @@ class RestaurantControllerTest {
 
     // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
-    void getSortedBy_plzAsc_kleinstePlzZuerst() throws Exception {
+    void getSortedBy_postalCodeAsc_smallestFirst() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "location.postalCode").param("direction", "asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(WIEN_NAME))
@@ -166,7 +166,7 @@ class RestaurantControllerTest {
 
     // Trello [2]: Die Standorte lassen sich sortieren (z. B. nach Name oder PLZ, auf- und absteigend)
     @Test
-    void getSortedBy_idAsc_anlegereihenfolge() throws Exception {
+    void getSortedBy_idAsc_insertionOrder() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "id").param("direction", "asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(LINZ_NAME))
@@ -176,7 +176,7 @@ class RestaurantControllerTest {
 
     // Trello [4]: Ohne vorhandene Standorte wird eine leere Liste angezeigt
     @Test
-    void getSortedBy_keineStandorte_leeresArrayMit200() throws Exception {
+    void getSortedBy_noLocations_emptyArrayWith200() throws Exception {
         clearDatabase();
 
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name"))
@@ -189,21 +189,21 @@ class RestaurantControllerTest {
 
     // Trello [3]: Eine ungültige Sortierung wird mit einer Fehlermeldung abgelehnt
     @Test
-    void getSortedBy_ohneByParameter_ist400() throws Exception {
+    void getSortedBy_withoutByParameter_returns400() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy"))
                 .andExpect(status().isBadRequest());
     }
 
     // Trello [3]: Eine ungültige Sortierung wird mit einer Fehlermeldung abgelehnt
     @Test
-    void getSortedBy_unbekanntesFeld_ist400() throws Exception {
+    void getSortedBy_unknownField_returns400() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "gibtEsNicht"))
                 .andExpect(status().isBadRequest());
     }
 
     // Trello [3]: Eine ungültige Sortierung wird mit einer Fehlermeldung abgelehnt
     @Test
-    void getSortedBy_ungueltigeRichtung_ist400() throws Exception {
+    void getSortedBy_invalidDirection_returns400() throws Exception {
         mockMvc.perform(get("/restaurant/getSortedBy").param("by", "name").param("direction", "seitwaerts"))
                 .andExpect(status().isBadRequest());
     }
