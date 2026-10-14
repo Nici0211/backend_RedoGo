@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface LocationMapper {
     Location toEntity(LocationDto locationDto);
     LocationDto toDto(Location location);

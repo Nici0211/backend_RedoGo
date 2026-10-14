@@ -5,26 +5,25 @@ import at.htlkaindorf.backend_redogo.dto.CartItemDto;
 import at.htlkaindorf.backend_redogo.dto.CartItemType;
 import at.htlkaindorf.backend_redogo.entity.CartItem;
 import at.htlkaindorf.backend_redogo.entity.ShoppingCart;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-@Component
-public class ShoppingCartMapper {
+@Mapper(componentModel = "spring")
+public interface ShoppingCartMapper {
 
-    public CartDto toDto(ShoppingCart cart) {
+    default CartDto toDto(ShoppingCart cart) {
         List<CartItemDto> items = cart.getItems().stream().map(this::toDto).toList();
         return new CartDto(cart.getId(), cart.getUser().getId(), items, cart.getTotalPrice());
     }
 
-    /** Leerer Warenkorb für Benutzer, die noch nichts hineingelegt haben (wird nicht gespeichert). */
-    public CartDto emptyCart(Long userId) {
+    default CartDto emptyCart(Long userId) {
         return new CartDto(null, userId, List.of(), BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
     }
 
-    public CartItemDto toDto(CartItem item) {
+    default CartItemDto toDto(CartItem item) {
         boolean isDish = item.getDish() != null;
         return new CartItemDto(
                 item.getId(),
