@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import at.htlkaindorf.backend_redogo.exception.InvalidCredentialsException;
 
 /**
  * Liefert bei Fehlern eine lesbare Fehlermeldung im Response-Body,
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
         HttpStatusCode status = e.getStatusCode();
         String message = e.getReason() != null ? e.getReason() : HttpStatus.valueOf(status.value()).getReasonPhrase();
         return ResponseEntity.status(status).body(new ApiError(status.value(), message));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiError(HttpStatus.UNAUTHORIZED.value(), e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
