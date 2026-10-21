@@ -1,5 +1,6 @@
-package at.htlkaindorf.backend_redogo.Controller;
+package at.htlkaindorf.backend_redogo.controller;
 
+import at.htlkaindorf.backend_redogo.dto.LoginRequestDto;
 import at.htlkaindorf.backend_redogo.dto.RegisterRequestDto;
 import at.htlkaindorf.backend_redogo.entity.User;
 import at.htlkaindorf.backend_redogo.repository.UserRepository;
@@ -227,5 +228,91 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated());
+    }
+
+    // ── Login ────────────────────────────────────────────────────────────────
+
+    private LoginRequestDto validLoginDto() {
+        LoginRequestDto dto = new LoginRequestDto();
+        dto.setEmail(EXISTING_EMAIL);
+        dto.setPasswort("Sicher123");
+        return dto;
+    }
+
+    // korrekte Daten → 200
+    @Test
+    void login_gueltigeDaten_gibt200() throws Exception {
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validLoginDto())))
+                .andExpect(status().isOk());
+    }
+
+    // Antwort enthält User-Daten ohne Passwort
+    @Test
+    void login_gueltigeDaten_antwortetMitUserDaten() throws Exception {
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validLoginDto())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.vorname").value("Max"))
+                .andExpect(jsonPath("$.email").value(EXISTING_EMAIL))
+                .andExpect(jsonPath("$.passwort").doesNotExist());
+    }
+
+    // unbekannte E-Mail → 401
+    @Test
+    void login_emailNichtVorhanden_gibt401() throws Exception {
+        LoginRequestDto dto = validLoginDto();
+        dto.setEmail("gibts@nicht.at");
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // falsches Passwort → 401
+    @Test
+    void login_falschesPasswort_gibt401() throws Exception {
+        LoginRequestDto dto = validLoginDto();
+        dto.setPasswort("FalschesPasswort");
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // E-Mail fehlt → 400
+    @Test
+    void login_emailFehlend_gibt400() throws Exception {
+        LoginRequestDto dto = validLoginDto();
+        dto.setEmail("");
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // Passwort fehlt → 400
+    @Test
+    void login_passwortFehlend_gibt400() throws Exception {
+        LoginRequestDto dto = validLoginDto();
+        dto.setPasswort("");
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ungültiges E-Mail-Format → 400
+    @Test
+    void login_emailUngueltig_gibt400() throws Exception {
+        LoginRequestDto dto = validLoginDto();
+        dto.setEmail("kein-at-zeichen");
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
     }
 }
