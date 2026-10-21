@@ -1,4 +1,4 @@
-package at.htlkaindorf.backend_redogo.Controller;
+package at.htlkaindorf.backend_redogo.controller;
 
 import at.htlkaindorf.backend_redogo.entity.Dish;
 import at.htlkaindorf.backend_redogo.entity.Menu;

@@ -1,5 +1,6 @@
 package at.htlkaindorf.backend_redogo.controller;
 
+import at.htlkaindorf.backend_redogo.dto.LoginRequestDto;
 import at.htlkaindorf.backend_redogo.dto.RegisterRequestDto;
 import at.htlkaindorf.backend_redogo.dto.UserResponseDto;
 import at.htlkaindorf.backend_redogo.service.UserService;
@@ -19,5 +20,10 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponseDto register(@Valid @RequestBody RegisterRequestDto dto) {
         return userService.register(dto);
+    }
+
+    @PostMapping("/login")
+    public UserResponseDto login(@Valid @RequestBody LoginRequestDto dto) {
+        return userService.login(dto);
     }
 }
