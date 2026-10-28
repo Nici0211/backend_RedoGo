@@ -74,3 +74,22 @@ VALUES
     (3011, 'Schüler-Menü', 'Mittagsburger, Pommes und ein Getränk - ideal für die Mittagspause.', 7.90, 1006),
     (3012, 'Wrap-Menü', 'Chicken Wrap mit Gemüse-Laibchen und Getränk.', 9.50, 1006)
     ON CONFLICT (id) DO NOTHING;
+
+
+-- US09: Rollen - Restaurantinhaber (ADMIN) und Besitzverhältnisse
+-- Testzugänge:  admin1@redogo.at / Admin1234  (Linz, Graz, Wien)
+--               admin2@redogo.at / Admin1234  (Salzburg, Innsbruck, Hartberg)
+--               anna@muster.at   / Sicher123  (normaler Kunde, kein Zugriff auf /admin)
+INSERT INTO users (vorname, nachname, email, telefon, strasse, hausnummer, plz, ort, passwort, role)
+VALUES
+  ('Gerda',  'Wirtin',  'admin1@redogo.at', '+43 664 1111111', 'Landstraße',  '45', '4020', 'Linz',      'Admin1234', 'ADMIN'),
+  ('Hannes', 'Gastwirt','admin2@redogo.at', '+43 664 2222222', 'Hauptplatz',  '5',  '8230', 'Hartberg',  'Admin1234', 'ADMIN')
+ON CONFLICT (email) DO NOTHING;
+
+UPDATE users SET role = 'USER' WHERE role IS NULL;
+
+UPDATE restaurant SET owner_id = (SELECT id FROM users WHERE email = 'admin1@redogo.at')
+WHERE id IN (1001, 1002, 1003) AND owner_id IS NULL;
+
+UPDATE restaurant SET owner_id = (SELECT id FROM users WHERE email = 'admin2@redogo.at')
+WHERE id IN (1004, 1005, 1006) AND owner_id IS NULL;

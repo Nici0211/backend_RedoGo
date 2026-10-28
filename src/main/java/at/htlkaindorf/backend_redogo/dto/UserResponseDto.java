@@ -1,5 +1,6 @@
 package at.htlkaindorf.backend_redogo.dto;
 
+import at.htlkaindorf.backend_redogo.entity.Role;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,4 +17,5 @@ public class UserResponseDto {
     private String hausnummer;
     private String plz;
     private String ort;
+    private Role role;
 }

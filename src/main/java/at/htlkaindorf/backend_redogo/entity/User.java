@@ -35,4 +35,10 @@ public class User {
     @Column(nullable = false)
     private String passwort;
 
+    /** US09: Standard ist USER; Restaurantinhaber haben die Rolle ADMIN. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'USER'")
+    @Builder.Default
+    private Role role = Role.USER;
+
 }

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import at.htlkaindorf.backend_redogo.dto.LoginRequestDto;
 import at.htlkaindorf.backend_redogo.dto.RegisterRequestDto;
 import at.htlkaindorf.backend_redogo.dto.UserResponseDto;
+import at.htlkaindorf.backend_redogo.entity.Role;
 import at.htlkaindorf.backend_redogo.entity.User;
 import at.htlkaindorf.backend_redogo.exception.GlobalExceptionHandler;
 import at.htlkaindorf.backend_redogo.mapper.UserMapper;
@@ -174,6 +175,7 @@ class UserControllerDiffblueTest {
                         .nachname("Bella")
                         .ort("Ort")
                         .plz("Plz")
+                        .role(Role.USER)
                         .strasse("Strasse")
                         .telefon("Telefon")
                         .vorname("Bella")
@@ -204,7 +206,7 @@ class UserControllerDiffblueTest {
                         content()
                                 .string(
                                         "{\"email\":\"jane.doe@example.org\",\"hausnummer\":\"Hausnummer\",\"id\":1,\"nachname\":\"Bella\",\"ort\":\"Ort\",\"plz"
-                                                + "\":\"Plz\",\"strasse\":\"Strasse\",\"telefon\":\"Telefon\",\"vorname\":\"Bella\"}"));
+                                                + "\":\"Plz\",\"role\":\"USER\",\"strasse\":\"Strasse\",\"telefon\":\"Telefon\",\"vorname\":\"Bella\"}"));
     }
 
     /**
