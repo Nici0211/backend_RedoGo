@@ -8,4 +8,6 @@ import java.util.List;
 public interface MenuRepository extends JpaRepository<Menu, Long> {
 
     List<Menu> findByRestaurantIdOrderByIdAsc(Long restaurantId);
+
+    boolean existsByRestaurantIdAndNameIgnoreCase(Long restaurantId, String name);
 }

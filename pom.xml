@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
+        <version>4.0.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>at.htlkaindorf</groupId>
@@ -28,6 +28,9 @@
     </scm>
     <properties>
         <java.version>25</java.version>
+        <!-- Versionen, die Diffblue Cover laut Environment-Health-Check empfiehlt -->
+        <spring-framework.version>7.0.2</spring-framework.version>
+        <mockito.version>5.21.0</mockito.version>
     </properties>
     <dependencies>
         <dependency>
