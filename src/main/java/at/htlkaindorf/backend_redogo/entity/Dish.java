@@ -22,6 +22,9 @@ public class Dish {
     private Long id;
 
     private String name;
+
+    /** Länge passt zur Validierung in CreateDishRequestDto (max. 500 Zeichen). */
+    @Column(length = 500)
     private String description;
 
     @Column(nullable = false, precision = 8, scale = 2)
