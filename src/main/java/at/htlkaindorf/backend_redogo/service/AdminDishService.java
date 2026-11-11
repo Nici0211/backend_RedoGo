@@ -52,7 +52,7 @@ public class AdminDishService {
         User admin = requireAdmin(adminId);
         Restaurant restaurant = requireOwnRestaurant(admin, restaurantId);
 
-        String name = request.getName().trim();
+        String name = request.name().trim();
         if (dishRepo.existsByRestaurantIdAndNameIgnoreCase(restaurantId, name)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Ein Gericht mit dem Namen \"" + name + "\" gibt es in diesem Restaurant bereits");
@@ -60,9 +60,9 @@ public class AdminDishService {
 
         Dish dish = new Dish();
         dish.setName(name);
-        dish.setDescription(blankToNull(request.getDescription()));
-        dish.setPrice(request.getPrice());
-        dish.setAvailable(request.getAvailable() == null || request.getAvailable());
+        dish.setDescription(blankToNull(request.description()));
+        dish.setPrice(request.price());
+        dish.setAvailable(request.available() == null || request.available());
         dish.setRestaurant(restaurant);
         Dish saved = dishRepo.save(dish);
 
@@ -98,7 +98,7 @@ public class AdminDishService {
         User admin = requireAdmin(adminId);
         Restaurant restaurant = requireOwnRestaurant(admin, restaurantId);
 
-        String name = request.getName().trim();
+        String name = request.name().trim();
         if (menuRepo.existsByRestaurantIdAndNameIgnoreCase(restaurantId, name)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Ein Menü mit dem Namen \"" + name + "\" gibt es in diesem Restaurant bereits");
@@ -106,9 +106,9 @@ public class AdminDishService {
 
         Menu menu = new Menu();
         menu.setName(name);
-        menu.setDescription(blankToNull(request.getDescription()));
-        menu.setPrice(request.getPrice());
-        menu.setAvailable(request.getAvailable() == null || request.getAvailable());
+        menu.setDescription(blankToNull(request.description()));
+        menu.setPrice(request.price());
+        menu.setAvailable(request.available() == null || request.available());
         menu.setRestaurant(restaurant);
         Menu saved = menuRepo.save(menu);
 

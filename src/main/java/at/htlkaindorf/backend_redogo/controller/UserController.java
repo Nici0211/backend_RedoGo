@@ -2,6 +2,7 @@ package at.htlkaindorf.backend_redogo.controller;
 
 import at.htlkaindorf.backend_redogo.dto.LoginRequestDto;
 import at.htlkaindorf.backend_redogo.dto.RegisterRequestDto;
+import at.htlkaindorf.backend_redogo.dto.UpdateUserRequestDto;
 import at.htlkaindorf.backend_redogo.dto.UserResponseDto;
 import at.htlkaindorf.backend_redogo.service.UserService;
 import jakarta.validation.Valid;
@@ -25,5 +26,15 @@ public class UserController {
     @PostMapping("/login")
     public UserResponseDto login(@Valid @RequestBody LoginRequestDto dto) {
         return userService.login(dto);
+    }
+
+    @GetMapping("/{id}")
+    public UserResponseDto getUser(@PathVariable Long id) {
+        return userService.getUser(id);
+    }
+
+    @PutMapping("/{id}")
+    public UserResponseDto updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequestDto dto) {
+        return userService.updateUser(id, dto);
     }
 }

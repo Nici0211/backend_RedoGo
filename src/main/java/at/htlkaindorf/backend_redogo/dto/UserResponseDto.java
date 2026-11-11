@@ -1,21 +1,16 @@
 package at.htlkaindorf.backend_redogo.dto;
 
 import at.htlkaindorf.backend_redogo.entity.Role;
-import lombok.Builder;
-import lombok.Data;
 
-@Data
-@Builder
-public class UserResponseDto {
-
-    private Long id;
-    private String vorname;
-    private String nachname;
-    private String email;
-    private String telefon;
-    private String strasse;
-    private String hausnummer;
-    private String plz;
-    private String ort;
-    private Role role;
-}
+public record UserResponseDto(
+        Long id,
+        String vorname,
+        String nachname,
+        String email,
+        String telefon,
+        String strasse,
+        String hausnummer,
+        String plz,
+        String ort,
+        Role role
+) {}

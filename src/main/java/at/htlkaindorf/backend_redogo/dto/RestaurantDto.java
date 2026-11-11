@@ -1,10 +1,7 @@
 package at.htlkaindorf.backend_redogo.dto;
 
-import lombok.Data;
-
-@Data
-public class RestaurantDto {
-    private Long id;
-    private String name;
-    private LocationDto location;
-}
+public record RestaurantDto(
+        Long id,
+        String name,
+        LocationDto location
+) {}
