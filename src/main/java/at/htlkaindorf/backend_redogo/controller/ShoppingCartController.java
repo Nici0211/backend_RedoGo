@@ -9,12 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * US1: Warenkorb eines Benutzers ansehen und Gerichte/Menüs hineinlegen.
- * US7: Positionen wieder entfernen bzw. die Menge ändern (Menge 0 entfernt).
- * {cartItemId} ist die ID der Position im Warenkorb (CartItemDto.id), nicht die ID des Gerichts/Menüs.
- * Die Speisekarte selbst liefert GET /restaurant/{id}/speisekarte.
- */
 @RestController
 @RequestMapping("/api/users/{userId}/cart")
 @RequiredArgsConstructor

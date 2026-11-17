@@ -8,6 +8,7 @@ import at.htlkaindorf.backend_redogo.entity.Menu;
 import at.htlkaindorf.backend_redogo.entity.ShoppingCart;
 import at.htlkaindorf.backend_redogo.entity.User;
 import at.htlkaindorf.backend_redogo.mapper.ShoppingCartMapper;
+import at.htlkaindorf.backend_redogo.repository.CartItemRepository;
 import at.htlkaindorf.backend_redogo.repository.DishRepository;
 import at.htlkaindorf.backend_redogo.repository.MenuRepository;
 import at.htlkaindorf.backend_redogo.repository.ShoppingCartRepository;
@@ -19,19 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-/**
- * US1: Als Kunde möchte ich Gerichte oder Menüs in meinen Warenkorb legen.
- * US7: Als Kunde will ich Artikel aus dem Warenkorb entfernen können.
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ShoppingCartService {
 
-    /** Obergrenze pro Position - verhindert Überläufe und Unsinns-Bestellungen. */
     static final int MAX_QUANTITY_PER_ITEM = 99;
 
     private final ShoppingCartRepository cartRepo;
+    private final CartItemRepository cartItemRepo;
     private final UserRepository userRepo;
     private final DishRepository dishRepo;
     private final MenuRepository menuRepo;
@@ -70,27 +67,18 @@ public class ShoppingCartService {
         }
         item.setQuantity(newQuantity);
 
-        // saveAndFlush, damit neue Positionen ihre ID schon in der Antwort haben
         ShoppingCart saved = cartRepo.saveAndFlush(cart);
         log.info("User {}: {}x {} {} im Warenkorb", userId, quantity, request.getType(), request.getItemId());
         return mapper.toDto(saved);
     }
 
-    /**
-     * US7: Entfernt eine Position komplett aus dem Warenkorb. Wird die letzte Position entfernt,
-     * bleibt ein leerer Warenkorb (Gesamtpreis 0) übrig.
-     */
     @Transactional
     public CartDto removeItem(Long userId, Long cartItemId) {
-        findUser(userId);
-        ShoppingCart cart = cartRepo.findByUserId(userId).orElseThrow(() -> itemNotFound(cartItemId));
+        ShoppingCart cart = cartRepo.findByUserId(userId)
+                .orElseThrow(() -> itemNotFound(cartItemId));
         return removeFromCart(userId, cart, cartItemId);
     }
 
-    /**
-     * US7: Setzt die Menge einer Position. Menge 0 entfernt die Position, negative Mengen
-     * und Mengen über dem Limit werden abgelehnt.
-     */
     @Transactional
     public CartDto updateItemQuantity(Long userId, Long cartItemId, int quantity) {
         findUser(userId);
@@ -110,8 +98,6 @@ public class ShoppingCartService {
         log.info("User {}: Position {} auf Menge {} gesetzt", userId, cartItemId, quantity);
         return mapper.toDto(saved);
     }
-
-    // ───────────────────────── Hilfsmethoden ─────────────────────────
 
     private User findUser(Long userId) {
         return userRepo.findById(userId)
@@ -159,14 +145,20 @@ public class ShoppingCartService {
 
     private CartDto removeFromCart(Long userId, ShoppingCart cart, Long cartItemId) {
         CartItem item = findCartItem(cart, cartItemId);
-        // orphanRemoval = true -> die Position wird beim Flush aus der DB gelöscht
+
+        // 1. Aus der Collection des Carts entfernen
         cart.getItems().remove(item);
-        ShoppingCart saved = cartRepo.saveAndFlush(cart);
+
+        // 2. Explizit über das Repository löschen
+        cartItemRepo.delete(item);
+
+        // 3. WICHTIG: Ändere saveAndFlush zu save + flush, damit Hibernate die Assoziation bereinigt
+        cartRepo.save(cart);
+
         log.info("User {}: Position {} aus dem Warenkorb entfernt", userId, cartItemId);
-        return mapper.toDto(saved);
+        return mapper.toDto(cart);
     }
 
-    /** Sucht die Position im Warenkorb dieses Benutzers - fremde Positionen werden so nie gefunden. */
     private CartItem findCartItem(ShoppingCart cart, Long cartItemId) {
         return cart.getItems().stream()
                 .filter(i -> i.getId().equals(cartItemId))

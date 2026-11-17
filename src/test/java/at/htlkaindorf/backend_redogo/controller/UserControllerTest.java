@@ -50,8 +50,8 @@ class UserControllerTest {
                 .build());
     }
 
-    private RegisterRequestDto validDto() {
-        RegisterRequestDto dto = new RegisterRequestDto();
+    private RegisterForm validDto() {
+        RegisterForm dto = new RegisterForm();
         dto.setVorname("Anna");
         dto.setNachname("Muster");
         dto.setEmail(NEW_EMAIL);
@@ -67,8 +67,8 @@ class UserControllerTest {
     @Test
     void register_gueltigeDaten_gibt201() throws Exception {
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validDto())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto().toDto())))
                 .andExpect(status().isCreated());
     }
 
@@ -76,8 +76,8 @@ class UserControllerTest {
     @Test
     void register_gueltigeDaten_antwortetMitUserOhnePasswort() throws Exception {
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validDto())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto().toDto())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.vorname").value("Anna"))
@@ -90,8 +90,8 @@ class UserControllerTest {
     @Test
     void register_gueltigeDaten_wirdInDatenbankGespeichert() throws Exception {
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validDto())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto().toDto())))
                 .andExpect(status().isCreated());
 
         assertThat(userRepository.existsByEmail(NEW_EMAIL)).isTrue();
@@ -100,140 +100,140 @@ class UserControllerTest {
     // bereits vorhandene E-Mail → 409
     @Test
     void register_emailBereitsVorhanden_gibt409() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setEmail(EXISTING_EMAIL);
 
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isConflict());
     }
 
     // Vorname fehlt → 400
     @Test
     void register_vornameFehlend_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setVorname("");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // Nachname fehlt → 400
     @Test
     void register_nachnameFehlend_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setNachname("");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // ungültige E-Mail → 400
     @Test
     void register_emailUngueltig_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setEmail("kein-at-zeichen.de");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // Passwort 7 Zeichen (GW unter) → 400
     @Test
     void register_passwort7Zeichen_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setPasswort("1234567");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // Passwort 8 Zeichen (GW) → 201
     @Test
     void register_passwort8Zeichen_gibt201() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setPasswort("12345678");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isCreated());
     }
 
     // PLZ mit Buchstaben → 400
     @Test
     void register_plzUngueltig_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setPlz("abcd");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // PLZ 3 Ziffern (GW unter) → 400
     @Test
     void register_plz3Ziffern_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setPlz("123");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // PLZ 4 Ziffern (GW) → 201
     @Test
     void register_plz4Ziffern_gibt201() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setPlz("4020");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isCreated());
     }
 
     // Straße fehlt → 400
     @Test
     void register_strasseFehlend_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setStrasse("");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // Ort fehlt → 400
     @Test
     void register_ortFehlend_gibt400() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setOrt("");
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // Telefon optional → 201 ohne Telefon
     @Test
     void register_telefonFehlt_gibt201() throws Exception {
-        RegisterRequestDto dto = validDto();
+        RegisterForm dto = validDto();
         dto.setTelefon(null);
         mockMvc.perform(post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isCreated());
     }
 
     // ── Login ────────────────────────────────────────────────────────────────
 
-    private LoginRequestDto validLoginDto() {
-        LoginRequestDto dto = new LoginRequestDto();
+    private LoginForm validLoginDto() {
+        LoginForm dto = new LoginForm();
         dto.setEmail(EXISTING_EMAIL);
         dto.setPasswort("Sicher123");
         return dto;
@@ -243,8 +243,8 @@ class UserControllerTest {
     @Test
     void login_gueltigeDaten_gibt200() throws Exception {
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validLoginDto())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLoginDto().toDto())))
                 .andExpect(status().isOk());
     }
 
@@ -252,8 +252,8 @@ class UserControllerTest {
     @Test
     void login_gueltigeDaten_antwortetMitUserDaten() throws Exception {
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validLoginDto())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLoginDto().toDto())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.vorname").value("Max"))
@@ -264,55 +264,89 @@ class UserControllerTest {
     // unbekannte E-Mail → 401
     @Test
     void login_emailNichtVorhanden_gibt401() throws Exception {
-        LoginRequestDto dto = validLoginDto();
+        LoginForm dto = validLoginDto();
         dto.setEmail("gibts@nicht.at");
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isUnauthorized());
     }
 
     // falsches Passwort → 401
     @Test
     void login_falschesPasswort_gibt401() throws Exception {
-        LoginRequestDto dto = validLoginDto();
+        LoginForm dto = validLoginDto();
         dto.setPasswort("FalschesPasswort");
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isUnauthorized());
     }
 
     // E-Mail fehlt → 400
     @Test
     void login_emailFehlend_gibt400() throws Exception {
-        LoginRequestDto dto = validLoginDto();
+        LoginForm dto = validLoginDto();
         dto.setEmail("");
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // Passwort fehlt → 400
     @Test
     void login_passwortFehlend_gibt400() throws Exception {
-        LoginRequestDto dto = validLoginDto();
+        LoginForm dto = validLoginDto();
         dto.setPasswort("");
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
     }
 
     // ungültiges E-Mail-Format → 400
     @Test
     void login_emailUngueltig_gibt400() throws Exception {
-        LoginRequestDto dto = validLoginDto();
+        LoginForm dto = validLoginDto();
         dto.setEmail("kein-at-zeichen");
         mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto.toDto())))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── Hilfsklassen ─────────────────────────────────────────────────────────
+    // RegisterRequestDto und LoginRequestDto sind Records (unveränderlich, keine Setter).
+    // Diese Formulare sammeln die Werte per Setter und erzeugen daraus den Record.
+
+    private static class RegisterForm {
+        private String vorname, nachname, email, telefon, strasse, hausnummer, plz, ort, passwort;
+
+        void setVorname(String v)    { this.vorname = v; }
+        void setNachname(String v)   { this.nachname = v; }
+        void setEmail(String v)      { this.email = v; }
+        void setTelefon(String v)    { this.telefon = v; }
+        void setStrasse(String v)    { this.strasse = v; }
+        void setHausnummer(String v) { this.hausnummer = v; }
+        void setPlz(String v)        { this.plz = v; }
+        void setOrt(String v)        { this.ort = v; }
+        void setPasswort(String v)   { this.passwort = v; }
+
+        RegisterRequestDto toDto() {
+            return new RegisterRequestDto(vorname, nachname, email, telefon,
+                    strasse, hausnummer, plz, ort, passwort);
+        }
+    }
+
+    private static class LoginForm {
+        private String email, passwort;
+
+        void setEmail(String v)    { this.email = v; }
+        void setPasswort(String v) { this.passwort = v; }
+
+        LoginRequestDto toDto() {
+            return new LoginRequestDto(email, passwort);
+        }
     }
 }
