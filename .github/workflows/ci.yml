@@ -5,6 +5,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 # Alte Läufe desselben Branches abbrechen (spart Zeit)
 concurrency:
@@ -28,6 +29,15 @@ jobs:
         shell: bash
 
     steps:
+      - name: Betriebssystem erkennen
+        id: os-check
+        run: |
+          case "$(uname -s)" in
+            Linux*)               echo "os=Linux" >> "$GITHUB_OUTPUT" ;;
+            MINGW*|MSYS*|CYGWIN*) echo "os=Windows" >> "$GITHUB_OUTPUT" ;;
+            *)                    echo "os=$RUNNER_OS" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       - name: Code auschecken
         uses: actions/checkout@v4
 
@@ -35,19 +45,19 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21          # an dein Projekt anpassen
+          java-version: '25'        # muss zu <java.version> in der pom.xml passen
           cache: maven
 
       # Linux: voller Build inkl. Integrationstests (Testcontainers funktioniert)
       - name: Build + alle Tests (Linux)
-        if: runner.os == 'Linux'
+        if: steps.os-check.outputs.os == 'Linux'
         run: mvn -B verify
 
       # Windows-Runner können keine Linux-Container starten -> kein Testcontainers.
       # Hier nur kompilieren + Unit-Tests, damit Windows-spezifische Probleme
       # (Pfade, Zeilenenden, Groß-/Kleinschreibung) auffallen.
       - name: Build + Unit-Tests (Windows)
-        if: runner.os == 'Windows'
+        if: steps.os-check.outputs.os == 'Windows'
         run: mvn -B test
 
       - name: Testberichte hochladen
